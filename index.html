@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>幼兒園文書行事曆</title>
+<meta name="description" content="幼兒園一學年的事件與文件提示詞：點選事件、填一次資料卡，提示詞自動帶入並可複製。">
+<meta property="og:title" content="幼兒園文書行事曆">
+<meta property="og:description" content="一學年的事件與文件提示詞：點選事件、填一次資料卡，提示詞自動帶入並可複製。">
+<style>img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@500;600;700;800&display=swap">
+<style>
+/* Layout: 上方標題與共同設定；中段是 8 月到隔年 7 月的月曆卡片（每格是可點的事件），下方「每個月都有」「隨時會來」兩列；點事件後在下方展開工作區：資料卡表單 → 教學方法勾選 → 參考依據 → 每份文件的提示詞（自動帶入、可複製）。品牌固定淺色系，刻意單一主題。 */
+:root{
+  --bg:#F7F5F2; --paper:#FFFFFF; --ink:#2B2B2B; --muted:#5E6673; --line:#E2DDD4;
+  --navy:#1F3A5F; --navy-2:#2F5F8F; --orange:#E8944A; --orange-ink:#A85A18; --warm:#FFF6EC; --pale:#E6EDF5; --code:#F1EEE8;
+  --sans:"Noto Sans TC","Noto Sans CJK TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --num:"Inter","Noto Sans TC",system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.75}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:32px 64px;display:flex;flex-direction:column;gap:26px}
+h1,h2,h3{margin:0;color:var(--navy);text-wrap:balance;line-height:1.3}
+p{margin:0}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+
+header{display:grid;grid-template-columns:1fr auto;gap:12px 24px;align-items:end}
+.eyebrow{font-family:var(--num);font-size:.8rem;letter-spacing:.2em;font-weight:700;color:var(--orange-ink)}
+header h1{font-size:clamp(1.9rem,5vw,2.8rem);font-weight:900;margin-top:4px}
+header .lead{color:var(--muted);max-width:62ch;margin-top:6px}
+.big{text-align:right}
+.big b{font-family:var(--num);font-size:clamp(2.6rem,7vw,4rem);font-weight:800;color:var(--orange);line-height:1}
+.big span{display:block;font-size:.85rem;color:var(--muted)}
+@media (max-width:640px){header{grid-template-columns:1fr}.big{text-align:left}}
+
+.howto{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.92rem;color:var(--muted)}
+.howto b{font-family:var(--num);color:#fff;background:var(--navy);border-radius:50%;width:22px;height:22px;display:inline-grid;place-items:center;font-size:.75rem;margin-right:6px}
+
+.settings{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.settings summary{cursor:pointer;font-weight:700;color:var(--navy)}
+.settings .grid2{display:grid;grid-template-columns:260px 1fr;gap:12px;margin-top:10px}
+@media (max-width:700px){.settings .grid2{grid-template-columns:1fr}}
+label.fl{display:flex;flex-direction:column;gap:4px;font-size:.85rem;font-weight:700;color:var(--muted)}
+input[type=text],input[type=date],input[type=search],textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;width:100%;font-weight:400;color:var(--ink);font-size:.95rem}
+textarea{resize:vertical;min-height:4.5em;line-height:1.6}
+.hint{font-size:.82rem;color:var(--muted);font-weight:400}
+
+.search{display:flex;gap:10px;align-items:center}
+.search input{max-width:340px}
+
+.sem{display:flex;flex-direction:column;gap:10px}
+.semh{font-weight:700;color:var(--navy);display:flex;align-items:center;gap:12px}
+.semh::after{content:"";flex:1;height:2px;background:var(--line)}
+.months{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+@media (max-width:980px){.months{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:560px){.months{grid-template-columns:repeat(2,1fr)}}
+.mon{background:var(--paper);border:1px solid var(--line);border-top:5px solid var(--navy);border-radius:12px;padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.mon.hot{border-top-color:var(--orange);background:var(--warm)}
+.mon .mn{font-family:var(--num);font-weight:800;font-size:1.35rem;color:var(--navy);line-height:1}
+.mon.hot .mn{color:var(--orange-ink)}
+.evs{display:flex;flex-direction:column;gap:6px}
+.ev{text-align:left;border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.92rem;font-weight:700;color:var(--ink);display:flex;justify-content:space-between;gap:6px;align-items:center}
+.ev:hover{border-color:var(--orange);background:#FFF0E2}
+.ev.hot{border-color:var(--orange)}
+.ev[aria-current="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.ev small{font-family:var(--num);font-weight:600;font-size:.72rem;color:var(--muted);white-space:nowrap}
+.ev[aria-current="true"] small{color:#D5E2F0}
+.ev.dim{opacity:.3}
+.rows{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:760px){.rows{grid-template-columns:1fr}}
+.rowbox{border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.rowbox.monthly{background:var(--navy);color:#fff}
+.rowbox.monthly h3{color:#fff}
+.rowbox.any{background:var(--paper);border:2px dashed var(--orange)}
+.rowbox.any h3{color:var(--orange-ink)}
+.rowbox h3{font-size:1rem}
+.rowbox .evs{flex-direction:row;flex-wrap:wrap}
+.rowbox.monthly .ev{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff}
+.rowbox.monthly .ev small{color:#C9D6E6}
+.rowbox.monthly .ev:hover{background:rgba(255,255,255,.2)}
+.rowbox.monthly .ev[aria-current="true"]{background:var(--orange);border-color:var(--orange)}
+
+/* workspace */
+#work{scroll-margin-top:12px}
+.empty{background:var(--paper);border:1px dashed var(--line);border-radius:12px;padding:24px;text-align:center;color:var(--muted)}
+.ws{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:18px}
+.ws-h{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;justify-content:space-between}
+.ws-h h2{font-size:1.6rem;font-weight:900}
+.ws-h .when{font-size:.88rem;color:var(--muted)}
+.ws-h .d{flex-basis:100%;color:var(--muted)}
+.back{border:0;background:none;color:var(--navy-2);cursor:pointer;font-size:.88rem;text-decoration:underline;padding:0}
+.step{display:flex;flex-direction:column;gap:10px}
+.sh{display:flex;gap:10px;align-items:center;font-weight:900;color:var(--navy);font-size:1.05rem}
+.sh i{font-style:normal;font-family:var(--num);background:var(--orange);color:#fff;border-radius:6px;padding:0 9px;font-size:.85rem}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+.fields .wide{grid-column:1/-1}
+@media (max-width:700px){.fields{grid-template-columns:1fr}}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:1px solid var(--navy);background:var(--navy);color:#fff;border-radius:8px;padding:5px 14px;font-weight:700;cursor:pointer;font-size:.9rem}
+.btn.ghost{background:transparent;color:var(--navy)}
+.btn.or{background:var(--orange);border-color:var(--orange);color:#2B2B2B}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:3px 12px;cursor:pointer;font-size:.88rem}
+.chip[aria-pressed="true"]{background:var(--pale);border-color:var(--navy-2);color:var(--navy);font-weight:700}
+.chip[aria-pressed="true"]::before{content:"✓ "}
+.basis{background:var(--pale);border-radius:10px;padding:10px 14px;font-size:.9rem;display:flex;flex-direction:column;gap:4px}
+.basis a{color:var(--navy-2)}
+.basis .pt{color:var(--muted)}
+.docs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:760px){.docs{grid-template-columns:1fr}}
+.doc{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0;background:var(--bg)}
+.doc h4{margin:0;font-size:1.02rem;color:var(--navy)}
+.doc .aud{font-size:.75rem;font-weight:700;color:var(--orange-ink);background:var(--warm);border-radius:999px;padding:0 9px;align-self:flex-start}
+.doc .task{font-size:.9rem;color:var(--muted)}
+.doc details summary{cursor:pointer;font-size:.85rem;color:var(--navy-2)}
+.doc pre{white-space:pre-wrap;word-break:break-word;background:var(--code);border-radius:8px;padding:10px 12px;font-family:var(--sans);font-size:.82rem;line-height:1.65;margin:6px 0 0;max-height:20em;overflow:auto}
+.go{font-size:.82rem;color:var(--muted)}
+.go a{color:var(--navy-2);font-weight:700}
+.status{font-size:.85rem;color:var(--orange-ink);min-height:1.2em}
+footer{font-size:.84rem;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:6px}
+footer a{color:var(--navy-2)}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <span class="eyebrow">ANNUAL PAPERWORK CALENDAR</span>
+    <h1>幼兒園文書行事曆</h1>
+    <p class="lead">一學年會遇到的事件都在這裡。點一個事件，填一次活動資料，這個事件需要的每份文件都會產生完整的提示詞，複製後貼到 ChatGPT、Gemini 或 Claude 就能使用。</p>
+  </div>
+  <div class="big"><b id="n-docs">0</b><span id="n-sub"></span></div>
+</header>
+
+<div class="howto"><span><b>1</b>點選月份裡的事件</span><span><b>2</b>填寫活動資料卡</span><span><b>3</b>勾選想用的教學方法</span><span><b>4</b>複製提示詞，貼到 AI</span></div>
+
+<details class="settings" id="settings">
+  <summary>共同設定：園所名稱、園所或縣市規定（填一次，所有提示詞都會帶入）</summary>
+  <div class="grid2">
+    <label class="fl" for="k-name">園所名稱<input type="text" id="k-name" value="○○幼兒園"><span class="hint">示範時建議維持「○○幼兒園」。</span></label>
+    <label class="fl" for="k-rule">園所或縣市規定（選填）<textarea id="k-rule" placeholder="例：本園校外教學需於 2 週前送園長核定；本縣市腸病毒停課標準依教育局公告……"></textarea><span class="hint">貼上你們園所或縣市的規定，AI 會優先照著寫。沒有填的話，AI 會在需要規定的地方標示【請依園所或縣市規定確認】。</span></label>
+  </div>
+</details>
+
+<div class="search"><input type="search" id="q" placeholder="搜尋事件，例如：通知、受傷、畢業" aria-label="搜尋事件"></div>
+
+<section class="sem" aria-label="上學期"><div class="semh">上學期</div><div class="months" id="sem1"></div></section>
+<section class="sem" aria-label="下學期"><div class="semh">下學期</div><div class="months" id="sem2"></div></section>
+<div class="rows">
+  <div class="rowbox monthly"><h3>每個月都有</h3><div class="evs" id="row-monthly"></div></div>
+  <div class="rowbox any"><h3>隨時會來</h3><div class="evs" id="row-any"></div></div>
+</div>
+
+<section id="work" aria-live="polite"><div class="empty">從上方點一個事件開始。橘色月份是大型活動，最適合示範「一份資料產出整套文件」。</div></section>
+
+<footer>
+  <p>提示詞只引用查證過的全國性依據名稱，並請 AI 不得自行寫出法規條號。各縣市與園所的規定不同，發出文件前請依最新規定確認。教學方法可搭配「幼兒園課綱活動對照」網站的教學法卡片使用。</p>
+  <p>示範用的範例資料（日期、人數、地點）皆為虛構。請勿在提示詞中輸入幼兒或家長的真實姓名與個人資料。</p>
+  <div class="abby-card" style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;max-width:620px;padding:14px 18px 0;background:#F7F5F2;border:1px solid #E6E1DA;border-left:4px solid #E8944A;border-radius:14px;font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;overflow:hidden;margin-top:22px">
+  <div style="flex:1 1 180px;min-width:0;padding-bottom:14px">
+    <a href="https://www.facebook.com/abby.ai.simple" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#1F3A5F;font-size:15px;font-weight:700;line-height:1.4"><span style="display:inline-flex;align-items:center;justify-content:center;flex:none;width:22px;height:22px"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" style="display:block"><circle cx="12" cy="12" r="10.5" fill="#FFFFFF"/><path fill="#1877F2" d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.52 1.5-3.92 3.77-3.92 1.09 0 2.23.2 2.23.2v2.46h-1.26c-1.24 0-1.63.78-1.63 1.57v1.9h2.78l-.45 2.9h-2.33V22c4.78-.79 8.45-4.94 8.45-9.94Z"/></svg></span><span>Abby 陪你簡單用 AI</span></a>
+    <div style="font-size:13px;color:#6B5A96;line-height:1.6;margin-top:2px">@abby.ai.simple</div>
+    <div style="font-size:13px;color:#5A6B80;line-height:1.6">慢慢來，一次學一點就好</div>
+  </div>
+  <img src="abby-ip.webp" alt="Abby" style="width:74px;height:auto;display:block;flex:none">
+</div>
+</footer>
+</div>
+
+<script>
+const BASIS={
+ cg:{n:"《幼兒園教保活動課程大綱》",u:"https://edu.law.moe.gov.tw/LawContent.aspx?id=GL001586"},
+ zz:{n:"《幼兒教保及照顧服務實施準則》",u:"https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=H0070047"},
+ yz:{n:"《幼兒教育及照顧法》",u:"https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=H0070031"},
+ xa:{n:"《校園安全及災害事件通報作業要點》",u:"https://edu.law.moe.gov.tw/LawContent.aspx?id=FL028684"},
+ gz:{n:"《個人資料保護法》",u:""},
+ cdc:{n:"衛生福利部疾病管制署與縣市衛生局的公告",u:""},
+ city:{n:"縣市政府教育局（處）的公告與規定",u:""},
+ plan:{n:"園所自訂的計畫與規定（例如防災計畫、緊急傷病處理流程）",u:""}
+};
+const POINTS={
+ trip:"《幼兒教保及照顧服務實施準則》提到：校外教學應訂定實施計畫並事前勘察地點，出發前及每次集合時清點人數；照顧者與 3 歲以上幼兒的比例不超過 1:8，與 2 歲以上未滿 3 歲幼兒不超過 1:3；需要搭乘車輛時，應有家長或照顧者的同意書；有特殊需求的幼兒，可安排家長或志工一對一隨行照顧，且不得以身心障礙為由拒絕幼兒參加。",
+ sport:"《幼兒教保及照顧服務實施準則》提到：幼兒園每日應提供幼兒 30 分鐘以上的出汗性大肌肉活動，活動前、後應安排暖身及緩和活動。",
+ med:"《幼兒教保及照顧服務實施準則》提到：幼兒園應訂定託藥措施並告知家長；協助用藥的藥品須為醫療機構開立，須核對藥品與藥袋記載並依記載方式用藥，不以侵入方式給藥。",
+ health:"《幼兒教保及照顧服務實施準則》提到：每學期至少為每位幼兒測量一次身高、體重，並定期實施發展篩檢。",
+ parent:"《幼兒教保及照顧服務實施準則》提到：幼兒園應提供家長課程與幼兒學習狀況的相關訊息，並辦理親職活動、提供教養資訊。",
+ cg:"《幼兒園教保活動課程大綱》包含身體動作與健康、認知、語文、社會、情緒、美感六大領域，以及覺知辨識、表達溝通、關懷合作、推理賞析、想像創造、自主管理六大核心素養。"
+};
+const MTH={
+ 11:["方案教學","深入研究真實生活中值得探究的事物，包含提出問題、調查、訪查、紀錄與分享。"],
+ 13:["學習區活動","設置語文、積木、美勞、扮演等區域，讓幼兒選擇、探索；教師觀察並支持。"],
+ 15:["生活化課程","從用餐、整理、穿衣、種植等真實生活中學習。"],
+ 17:["跨文化與多元文化課程","透過家庭與生活經驗，理解不同文化、語言及習慣。"],
+ 20:["規則遊戲","透過簡單規則，練習輪流、記憶、配對、數量與自我控制。"],
+ 21:["扮演遊戲","用物品代替另一樣東西，扮演角色並協商情節。"],
+ 25:["體驗式學習","經歷真實活動，再以談話、圖畫或再次操作整理經驗。"],
+ 27:["探究式學習","從提問、猜想、觀察與嘗試，逐步形成理解。"],
+ 30:["說故事教學","用口述、圖片、實物或偶，建立故事情境並引發想像。"],
+ 31:["繪本共讀","師生共同觀看圖文，交流觀察、理解及生活經驗。"],
+ 35:["團體討論","透過短而具體的共同談話，分享經驗、討論問題與安排活動。"],
+ 37:["經驗分享","從幼兒親身經驗出發，練習描述、聆聽與回應。"],
+ 38:["語言經驗法","教師把幼兒口述的共同經驗寫下，連結說話與文字。"],
+ 39:["歌謠與手指謠","透過節奏、重複與動作參與語言活動。"],
+ 40:["創作取向美術","提供材料與探索機會，鼓勵不同表達，不以作品一致為目標。"],
+ 41:["音樂與律動","透過歌唱、節奏、聆聽、樂器與身體動作學習。"],
+ 44:["創造性戲劇","以想像、動作、聲音與即興演出探索情境。"],
+ 45:["偶戲教學","透過手偶或其他偶具說故事、對話與討論問題。"],
+ 46:["動作遊戲","透過跑、跳、平衡、投擲和空間探索學習。"],
+ 47:["自然觀察","持續觀察自然現象，以畫圖、照片或談話紀錄變化。"],
+ 49:["實地走訪","到真實場域觀看、體驗、訪問，再整理發現。"],
+ 50:["示範與模仿","教師或同儕把動作、步驟或說法做給孩子看。"],
+ 51:["簡短直接教學","清楚說明特定知識、操作或安全規則，再安排實作。"],
+ 63:["情境演練","用幼兒常遇到的情境練習表達與回應。"],
+ 65:["衝突協商與問題解決","協助說出彼此需求，提出辦法並嘗試。"],
+ 66:["班級共同約定","與幼兒討論生活需要，形成具體、能理解的約定。"]
+};
+const f=(k,l,t,ex)=>({k,l,t,ex});
+const ACT=[f("name","活動名稱","text","秋季親子運動會「動動小勇士」"),f("date","日期","date","2026-11-21"),f("time","時間","text","上午 9:00–11:30（8:40 報到）"),f("place","地點","text","園所操場"),f("rain","雨天備案","text","改在室內遊戲室，流程縮短為 10:30 結束"),f("who","對象與人數","text","全園 5 班約 120 位幼兒與家長，每位幼兒最多 2 位家長陪同"),f("goal","活動目的","area","增進親子互動、培養運動習慣、體驗團隊合作"),f("flow","活動流程","area","9:00 開幕與暖身操\n9:15 幼幼班、小班親子闖關\n9:45 中班、大班親子接力\n10:30 全園滾大球\n11:00 頒發參加獎與合照"),f("cost","費用","text","免費"),f("bring","家長需準備","text","運動服、運動鞋、水壺、毛巾"),f("due","回條截止日","date","2026-11-13"),f("note","注意事項","area","當天不提供早餐；周邊停車位有限，請盡量步行")];
+const pick=(o,...ks)=>ks.map(k=>{const b=ACT.find(x=>x.k===k);return {...b,ex:(o[k]!==undefined?o[k]:b.ex)}});
+const TRIP={name:"秋季校外教學「植物園探險」",date:"2026-10-23",time:"上午 9:00–11:30",goal:"觀察秋天的植物變化，練習團體出遊的安全規則",flow:"9:00 教室集合、行前提醒與清點\n9:15 步行出發\n9:30 植物園分組觀察與撿拾落葉\n10:30 草地野餐點心\n11:00 清點後步行返園",rain:"改為下週五，或改在園內進行植物觀察",cost:"免費",bring:"運動鞋、帽子、水壺、小毛巾",due:"2026-10-16",note:"請幫孩子穿著方便行走的衣物"};
+const CD={name:"兒童節「童樂嘉年華」",date:"2027-04-01",time:"上午 9:30–11:30",place:"園所操場與各班教室",who:"全園 5 班約 120 位幼兒",goal:"讓孩子在遊戲中感受被重視與快樂，練習輪流與合作",flow:"9:30 開場與律動\n9:50 各班闖關遊戲\n10:50 點心分享\n11:10 小禮物與大合照",bring:"穿著方便活動的衣服",note:"當天不需要家長陪同"};
+const GR={name:"第 ○ 屆畢業典禮「長大的我們」",date:"2027-06-26",time:"上午 9:30–11:30（9:00 開放入場）",place:"園所禮堂",rain:"室內舉行，不受天氣影響",who:"大班畢業生 56 位與家長，每位畢業生最多 3 位家長",goal:"回顧孩子三年的成長，感謝家長與老師的陪伴，祝福孩子上小學",flow:"9:30 開場與回顧影片\n9:50 園長致詞\n10:05 畢業生表演\n10:30 頒發畢業證書\n11:10 感恩時間與大合照",bring:"畢業袍由園所提供",note:"禮堂座位有限，請依座位表入座"};
+const EVENTS=[
+{id:"newcomer",m:[8],t:"新生入園",d:"新生和家長最需要「清楚、安心」的資訊。",f:[f("start","開學日","date","2026-08-31"),f("cls","班級與年齡","text","小班（3–4 歲）"),f("routine","一日作息","area","8:00–8:30 入園\n8:30–9:00 戶外活動\n9:00 點心\n9:30–11:00 主題活動與學習區\n11:30 午餐\n12:30–14:00 午睡\n15:00 點心\n16:00 放學"),f("adapt","適應期安排","area","第一週可提早至 12:00 接回；家長可在入園時陪伴 10 分鐘"),f("bring","需準備物品","area","備用衣物兩套、室內鞋、水壺、午睡被"),f("pickup","接送方式","text","家長親自接送，委託他人接送請事先告知"),f("channel","聯絡管道","text","班級 LINE 群組、聯絡簿")],b:["zz","gz"],pt:["parent"],docs:[
+ ["新生入園須知","家長","寫一份「新生入園須知」，依序包含：開學日、一日作息、需準備物品（可做成勾選清單）、接送方式、聯絡管道、第一週適應期安排。語氣溫暖、條列清楚，最後加一段安撫家長分離焦慮的話。"],
+ ["給新生家長的一封信","家長","以班級老師的口吻寫一封給新生家長的信（400 字以內），介紹自己的帶班理念、適應期孩子可能出現的反應（哭泣、黏人、食慾改變），以及家長可以在家怎麼陪伴。不要承諾「一定不會哭」之類無法保證的事。"],
+ ["緊急聯絡資料表（空白格式）","園所內部","設計一份空白的「幼兒緊急聯絡資料表」格式，欄位包含：幼兒基本資料、主要與次要聯絡人、可接送人員、過敏與特殊健康狀況、就醫偏好。最下方加一段個資使用說明，說明資料僅供園所緊急聯絡使用。只要設計格式，不要填入任何資料。"],
+ ["第一週家長常見問答","家長","整理新生家長第一週最常問的 8 個問題與回答，例如：孩子哭了怎麼辦、可以帶玩具嗎、午睡睡不著怎麼辦。回答要具體、可執行；涉及園所規定的部分標示【請依園所規定確認】。"]]},
+{id:"ptc",m:[9],t:"親師座談會",d:"學期初讓家長了解課程方向與班級約定。",f:[f("date","日期","date","2026-09-19"),f("time","時間","text","上午 10:00–11:30"),f("place","地點","text","各班教室"),f("cls","班級與年齡","text","中班（4–5 歲）"),f("theme","本學期主題課程","area","「我的身體」「秋天的大自然」「我們的社區」"),f("rule","班級重點與約定","area","作息、餐點、聯絡簿、生病請假方式"),f("agenda","議程","area","園長致詞、班級課程說明、家長提問、選出班級家長代表"),f("memo","會議筆記（會後填寫，選填）","area","")],b:["zz","cg"],pt:["parent","cg"],docs:[
+ ["座談會邀請函","家長","寫一份親師座談會邀請函，包含時間、地點、議程，以及「希望家長事先想一個想問老師的問題」的邀請。附上簡短回條（出席人數）。"],
+ ["課程說明簡報大綱","家長","規劃 10 頁的家長說明簡報大綱，每頁寫出標題與 3 個重點。內容包含：本學期主題課程、每個主題會連結課綱的哪些領域、孩子一天的作息、班級約定、家長可以怎麼配合。用家長聽得懂的話說明課綱，不使用學術名詞。"],
+ ["座談會紀錄","園所內部","把「會議筆記」整理成座談會紀錄：日期、出席情形、說明重點、家長提問與回覆、待辦事項（負責人、期限）。筆記沒有寫到的內容一律寫「未記錄」，不可推測家長說了什麼。"],
+ ["會後感謝與重點整理","家長","寫一則給全班家長的會後通知（LINE 版，250 字以內），感謝出席，並條列今天說明的 3 到 5 個重點，讓沒出席的家長也能掌握。"]]},
+{id:"drill",m:[9,3],t:"防災與消防演練",d:"9 月 21 日是國家防災日，許多園所會在前後辦理演練。",f:[f("date","演練日期","date","2026-09-18"),f("time","時間","text","上午 10:00"),f("type","演練情境","text","地震後引發廚房火災"),f("route","疏散路線與集合點","area","各班由後門出，集合於操場東側大樹下"),f("who","參與班級與人數","text","全園 5 班約 120 位幼兒、教職員 18 位"),f("team","人員分工","area","指揮、通報、滅火、疏散引導、清點人數、救護")],ms:[63,50,31,51],b:["plan","city"],docs:[
+ ["演練實施計畫","園所內部","撰寫一份防災演練實施計畫：目的、時間、情境說明、演練流程（時間軸）、人員分工表、疏散路線、清點與回報方式、檢討方式。涉及園所防災計畫或縣市規定的細節標示【請依園所防災計畫確認】。"],
+ ["演練前的幼兒課程活動","幼兒","設計 2 個演練前的課程活動（各 20 分鐘），讓孩子認識「趴下、掩護、穩住」與聽到警報時怎麼做。使用上方勾選的教學方法，寫出活動流程、老師的提問、孩子可能的反應。避免使用讓孩子害怕的描述。"],
+ ["給家長的演練通知","家長","寫一則演練通知，說明演練時間與目的，請家長在家和孩子聊聊「地震時怎麼保護自己」，並附 3 個親子可以一起做的小活動。"],
+ ["演練紀錄與檢討","園所內部","設計一份演練紀錄表格式（時間、各項流程實際耗時、清點結果、發現的問題、改善措施），並附上一段檢討會議的討論提綱。只設計格式與提綱，不填入結果。"]]},
+{id:"trip",m:[10,3],t:"校外教學",hot:1,d:"秋季與春季都常見；計畫、同意書、安全最重要。",f:[...pick(TRIP,"name","date","time"),f("place","地點與路線","text","市立植物園（步行 15 分鐘）"),f("trans","交通方式","text","步行（若改搭車需另備家長同意書）"),f("who","參加班級與人數","text","大班 2 班共 56 位幼兒"),f("staff","隨行人力","text","教保服務人員 4 位、志工家長 4 位"),...pick(TRIP,"goal","flow","rain","cost","bring","due")],ms:[49,37,38,27,47],b:["zz","cg","plan"],pt:["trip","cg"],docs:[
+ ["校外教學實施計畫","園所內部","撰寫校外教學實施計畫：目的（連結課綱領域）、時間地點、路線與交通、參加人數與隨行人力配置（列出照顧者與幼兒比例並自我檢核）、行程表、事前勘察紀錄欄、風險評估表（風險｜預防措施｜應變方式）、清點人數的時間點、緊急聯絡與就醫安排、雨天備案。"],
+ ["家長通知與同意書","家長","寫一份給家長的校外教學通知與同意書：活動說明、行程、需準備物品、服裝建議、注意事項；下方附可剪下的同意書（是否參加、交通方式同意、幼兒特殊健康狀況、家長簽名、截止日）。"],
+ ["行前與回來後的課程活動","幼兒","設計校外教學前 1 個、回來後 2 個課程活動，用上方勾選的教學方法。行前活動引發孩子的好奇與提問；回來後的活動幫助孩子整理經驗（例如畫圖、口述、做班級小書）。每個活動寫出流程、老師提問、對應的課綱領域。"],
+ ["活動成果報告","園所內部","寫一份活動成果報告：活動概述、實施情形、幼兒學習表現（寫出看得到的具體行為，連結課綱領域）、檢討與建議、6 張建議照片與說明文字。實際發生的情況若資料沒有提供，標示【待補：請填入當天實際情形】。"]]},
+{id:"sports",m:[11],t:"運動會",hot:1,d:"一份活動資料，就能產出整套文件的最佳示範。",f:[...ACT,f("after","活動後補充（寫成果報告時填）","area","")],ms:[46,20],b:["cg","zz"],pt:["sport","cg"],docs:[
+ ["活動企劃書","園長、主任","寫一份給園長審閱的活動企劃書：活動名稱、目的、時間地點與雨天備案、參加對象、活動流程表（時間｜內容｜負責人）、人力分工表、器材與場地需求、經費、安全措施與緊急應變、預期效益（連結課綱的身體動作與健康、社會領域）。負責人一律寫【待補】。"],
+ ["家長通知單（LINE 版與紙本版）","家長","產出兩個版本：①LINE 群組版，200 字以內、重點條列、最後提醒回條截止日；②紙本通知單，開頭「親愛的家長您好」，包含時間地點、流程摘要、需準備物品、雨天怎麼辦、注意事項，家長 1 分鐘內能讀完，結尾留園所名稱與日期。"],
+ ["回條與 Google 表單題目","家長","設計兩個版本：①可剪下的紙本回條（班級、幼兒姓名空白欄、是否參加、陪同家長人數、需特別注意的身體狀況、家長簽名、截止日）；②Google 表單的題目、題型與選項，讓我可以照著建立表單。"],
+ ["主持稿","主持人","依活動流程寫主持稿：每段標示時間，口語、念得出來；開場說明流程與安全提醒；項目之間有串場；頒獎時不排名次，強調每個孩子都是小勇士；閉幕感謝並提醒帶回個人物品；另寫一段雨天縮短流程時的開場說明。"],
+ ["活動成果報告","園所內部","依「活動後補充」寫活動成果報告：活動概述、實施情形、幼兒學習表現（具體行為，連結課綱的身體動作與健康、社會、情緒領域）、家長回饋、檢討與建議、6 張建議照片與說明文字。沒有提供的實際情況標示【待補】。"]]},
+{id:"festival",m:[9,12,2,6],t:"節慶活動",d:"中秋、聖誕、元宵、端午等節慶的課程與通知。",f:[f("fest","節慶","text","元宵節"),f("date","活動日期","date","2027-02-19"),f("cls","班級與年齡","text","中班（4–5 歲）"),f("form","活動形式","text","做燈籠、猜燈謎、提燈遊園"),f("focus","想融入的文化重點","area","燈籠的由來、各地不同的元宵習俗"),f("bring","需家長配合","text","可帶家中的燈籠或回收紙盒")],ms:[31,30,40,17,15,41],b:["cg"],pt:["cg"],docs:[
+ ["節慶主題課程設計","幼兒","設計 3 個節慶主題課程活動（各 30 分鐘），使用上方勾選的教學方法，連結課綱的社會領域（認識文化的多元現象）與美感領域。每個活動寫出：目標、準備材料、流程（引起動機、主要活動、分享）、老師提問、對應的課綱領域。尊重家庭的不同信仰與習俗，不要求每個家庭都必須過這個節日。"],
+ ["給家長的活動通知","家長","寫一則節慶活動通知（LINE 版與紙本版），說明活動內容、日期、需配合事項，並邀請家長分享家裡過節的方式。"],
+ ["社群貼文","公開","寫一篇園所社群的活動紀錄貼文（150 字以內），描述孩子在活動中的投入與發現，不寫幼兒姓名，最後提醒「照片已取得家長同意」的位置【待補】。"]]},
+{id:"expo",m:[12],t:"學習成果展",d:"把一學期的學習歷程呈現給家長。",f:[f("date","日期","date","2026-12-19"),f("time","時間","text","上午 9:30–11:30"),f("place","地點","text","園所大廳與各班教室"),f("theme","展出主題","area","「秋天的大自然」主題：落葉拼貼、樹的觀察紀錄、班級小書"),f("cls","參與班級","text","全園 5 班"),f("flow","流程","area","9:30 開幕與幼兒表演\n10:00 各班自由參觀\n11:00 親子回饋時間")],ms:[38,40,37],b:["cg"],pt:["cg"],docs:[
+ ["成果展邀請函","家長","寫一份溫暖的成果展邀請函，說明展出主題、時間地點、流程，並邀請家長參觀時「多問孩子怎麼做的」，而不是只看作品好不好看。"],
+ ["作品說明牌文字","參觀者","依展出主題寫 5 張作品說明牌（每張 60 字以內）：作品名稱、孩子的學習歷程、對應的課綱領域。重點放在孩子「怎麼想、怎麼做」，不寫幼兒姓名。"],
+ ["展場導覽稿","老師、家長志工","寫一份 3 分鐘的展場導覽稿，帶參觀者看懂主題課程的脈絡：從孩子的提問開始、經歷了哪些探索、最後產生哪些作品。"],
+ ["成果報告","園所內部","寫一份學習成果展成果報告：活動概述、展出內容、家長回饋整理（實際回饋若未提供標示【待補】）、檢討與建議。"]]},
+{id:"term",m:[1,7],t:"期末評量與成長紀錄",d:"學期評量與給家長的成長紀錄。",f:[f("cls","班級與年齡","text","大班（5–6 歲）"),f("theme","本學期主題","area","「我的身體」「秋天的大自然」"),f("obs","班級整體觀察重點（不寫個別幼兒）","area","多數孩子能在團討時輪流發言；合作搭建時開始會分工；對自然觀察很有興趣")],b:["cg","gz"],pt:["cg"],docs:[
+ ["學期評量的寫法建議","老師自己","我要寫學期幼兒學習評量。請不要直接幫我寫評語，而是提供：①評量的結構建議（依課綱六大核心素養）；②每個素養各 3 個「描述具體行為」的句型範例，例如「在○○情境中，能夠……」；③寫評語時要避免的用詞（例如貼標籤、和其他孩子比較）。"],
+ ["給家長的學期成長紀錄（班級版）","家長","依本學期主題與班級整體觀察，寫一份給全班家長的「學期成長紀錄」：這學期我們做了什麼、孩子們整體的成長、寒暑假在家可以延續的親子活動。不寫任何個別幼兒的表現。"],
+ ["寒暑假通知","家長","寫一份寒暑假通知：假期起訖與返園日【待補】、假期間生活作息建議、安全提醒（交通、用水、用電、網路使用）、返園需攜帶的物品。"]]},
+{id:"school-start",m:[2,8],t:"開學通知",d:"新學期開始的家長通知與課程介紹。",f:[f("date","開學日","date","2027-02-11"),f("cls","班級與年齡","text","中班（4–5 歲）"),f("theme","新學期主題","area","「我們的社區」「春天來了」"),f("change","本學期的改變","area","新增一位教保服務人員；午睡時間調整為 12:30–14:00")],ms:[37,35],b:["zz"],pt:["parent"],docs:[
+ ["開學通知","家長","寫一則開學通知（LINE 版與紙本版）：開學日、需攜帶物品、本學期的改變、提醒假期後作息調整。"],
+ ["新學期課程介紹","家長","用家長看得懂的話介紹本學期主題課程：每個主題會做什麼、孩子可能學到什麼（連結課綱領域）、家長可以怎麼在家配合。"],
+ ["開學第一週的分享活動","幼兒","設計開學第一週的「假期分享」活動，使用上方勾選的教學方法，幫助孩子重新適應團體生活。寫出流程、老師提問，以及照顧不想分享的孩子的方式。"]]},
+{id:"childday",m:[4],t:"兒童節活動",d:"4 月 4 日兒童節的慶祝活動。",f:[...pick(CD,"name","date","time","place","who","goal","flow","bring","note")],ms:[21,20,44],b:["cg"],pt:["cg"],docs:[
+ ["兒童節活動企劃書","園長、主任","寫兒童節活動企劃書：目的（連結課綱領域）、時間地點、流程表、人力分工、器材需求、安全措施、預期效益。負責人寫【待補】。"],
+ ["家長通知","家長","寫一則兒童節活動通知（LINE 版與紙本版）。"],
+ ["社群貼文","公開","寫一篇兒童節活動紀錄貼文（150 字以內），不寫幼兒姓名。"]]},
+{id:"enroll",m:[4],t:"招生",d:"招生簡章、宣傳文案與說明會。",f:[f("feature","園所特色","area","主題課程、每週戶外探索、自煮營養餐點"),f("classes","招收班別與年齡","text","幼幼班、小班、中班、大班"),f("period","招生期間","text","依縣市公告【待補】"),f("brief","說明會時間地點","text","2027 年 4 月 17 日（星期六）上午 10:00，園所大廳"),f("fee","收費資訊","text","依縣市公告收費標準【待補】"),f("apply","報名方式","text","線上登記或至園所辦理")],b:["city","yz"],docs:[
+ ["招生簡章","家長","寫一份招生簡章：園所理念與特色、招收班別、作息、餐點、收費（標示依公告）、報名方式與時程、聯絡方式【待補】。所有涉及招生資格、收費、補助的內容，一律標示【請依縣市公告確認】，不要自己寫金額或補助規定。"],
+ ["社群宣傳文案（3 個版本）","公開","寫 3 個不同風格的招生貼文（各 150 字以內）：①溫暖故事型；②重點條列型；③家長常見問題型。不使用誇大或保證式的用語（例如「最好的」「保證」），不寫幼兒姓名。"],
+ ["招生說明會簡報大綱","家長","規劃 12 頁的招生說明會簡報大綱，每頁寫出標題與 3 個重點，包含：園所理念、一天的生活、課程特色（用孩子的學習故事說明）、師資、餐點與安全、報名方式。"],
+ ["家長常見問答","家長","整理招生時家長最常問的 10 個問題與回答方向。涉及收費、補助、招生資格的問題，回答一律寫【請依縣市公告確認】。"]]},
+{id:"mother",m:[5],t:"母親節活動",d:"注意家庭型態的多元，邀請「重要照顧者」。",f:[f("date","活動日期","date","2027-05-07"),f("cls","班級與年齡","text","小班（3–4 歲）"),f("form","活動形式","text","親子按摩、孩子親手做卡片"),f("time","時間","text","下午 3:00–4:00")],ms:[40,39,37],b:["cg"],pt:["cg"],docs:[
+ ["邀請卡文字","家長","寫一張活動邀請卡的文字。邀請對象寫成「媽媽或孩子心中重要的照顧者」，讓不同家庭型態的孩子都能參與。"],
+ ["親子活動企劃","園所內部","寫一份母親節親子活動的流程與分工，使用上方勾選的教學方法，並說明如何照顧沒有家長能出席的孩子（例如由老師陪同完成）。"],
+ ["引導孩子表達感謝的課程活動","幼兒","設計一個 30 分鐘的課程活動，引導孩子用畫圖、口述或歌謠表達對照顧者的感謝。寫出流程與老師提問，重視每個孩子不同的表達方式。"]]},
+{id:"transition",m:[5],t:"幼小銜接",d:"大班的國小參訪與銜接活動。",f:[f("school","參訪國小","text","鄰近的○○國小"),f("date","參訪日期","date","2027-05-14"),f("time","時間","text","上午 9:00–11:00"),f("content","參訪內容","area","參觀教室、圖書館、操場，體驗一節課"),f("who","參加人數","text","大班 2 班共 56 位幼兒")],ms:[49,37,21,35],b:["cg","zz"],pt:["trip","cg"],docs:[
+ ["國小參訪計畫","園所內部","撰寫國小參訪計畫：目的、時間、路線、人力配置與比例、行程、與國小的聯繫事項、安全措施、清點時間點。"],
+ ["給家長的幼小銜接說明","家長","寫一封給大班家長的信，說明幼小銜接重視的是生活自理、表達需求、適應新環境，而不是提前寫字或算術；附上 5 個在家可以做的準備。"],
+ ["銜接主題課程活動","幼兒","設計 3 個幼小銜接課程活動，使用上方勾選的教學方法，例如參訪前的提問、參訪後的經驗分享、在扮演區布置「小學教室」。寫出流程與老師提問。"]]},
+{id:"illness",m:[5,10],t:"傳染病衛教",d:"腸病毒、流感好發季節前的衛教與預防。",f:[f("disease","疾病","text","腸病毒"),f("cls","班級與年齡","text","全園"),f("measure","園所防疫措施","area","每日入園量體溫、加強環境消毒、落實洗手")],ms:[50,39,31],b:["cdc","city"],docs:[
+ ["家長衛教通知","家長","寫一則衛教通知：常見症狀、在家觀察重點、何時需要就醫與請假、園所目前的防疫措施。停課標準一律寫【請依縣市政府與疾管署公告】，不要自己寫天數或人數門檻。"],
+ ["洗手與防疫的幼兒活動","幼兒","設計 2 個讓孩子學會正確洗手、咳嗽禮節的活動，使用上方勾選的教學方法。用孩子能理解的方式說明，不製造恐懼。"]]},
+{id:"graduation",m:[6],t:"畢業典禮",hot:1,d:"企劃、邀請函、主持稿、致詞稿、紀念冊文字一次完成。",f:[...pick(GR,"name","date","time","place","who","goal","flow","rain","bring","note"),f("grad","畢業生人數","text","大班 2 班共 56 位"),f("special","典禮特色","area","孩子回顧三年的影片、每位畢業生上台領證書")],ms:[37,44,41],b:["cg"],pt:["cg"],docs:[
+ ["畢業典禮企劃書","園長、主任","寫畢業典禮企劃書：目的、時間地點、雨天備案、流程表（時間｜內容｜負責人）、人力分工、場地布置與器材、預算、安全措施。負責人寫【待補】。"],
+ ["邀請函","家長、來賓","寫一份畢業典禮邀請函（給家長與來賓），溫暖、正式。"],
+ ["主持稿","主持人","依流程寫畢業典禮主持稿：每段標示時間、口語化；串場時讓孩子成為主角；頒發證書時唸名字的段落以【幼兒姓名】代替。"],
+ ["園長致詞稿","園長","寫一篇 3 分鐘的園長致詞稿：回顧孩子的成長、感謝家長與老師、對孩子上小學的祝福。避免空泛的形容詞，用 2 個具體的班級小故事（以【待補：班級故事】標示讓我填入）。"],
+ ["畢業紀念冊班級文字","家長、幼兒","寫畢業紀念冊的班級頁文字：老師給全班的話（200 字）、班級一年的回顧（依月份條列重要活動）。不寫個別幼兒姓名。"]]},
+{id:"notice",m:["monthly"],t:"一般家長通知",d:"任何事情的通知：一次產出 LINE、紙本與其他語言版本。",f:[f("topic","通知事項","text","下週三進行全園環境消毒，當天提早放學"),f("date","日期","date","2026-10-21"),f("detail","重點內容","area","當天 12:00 放學，下午不提供課後留園；隔天正常上課"),f("need","需要家長配合","text","請於 12:00 前接回孩子"),f("lang","需要的其他語言（選填）","text","越南文")],b:["gz"],docs:[
+ ["LINE 群組版與紙本版","家長","產出兩個版本：①LINE 版，150 字以內、重點條列；②紙本版，開頭「親愛的家長您好」，結尾留園所名稱與日期。兩個版本的日期與時間必須完全一致。"],
+ ["其他語言版本","新住民家長","把通知翻譯成「需要的其他語言」，保留日期與時間的阿拉伯數字，並在最上方附一行中文標題。最後提醒我：請懂這個語言的人確認後再發出。"],
+ ["更簡短的提醒版","家長","寫一則活動前一天發送的提醒（50 字以內）。"]]},
+{id:"meeting",m:["monthly"],t:"會議紀錄",d:"園務會議、教保會議、課程發展會議。",f:[f("mname","會議名稱","text","10 月園務會議"),f("date","日期","date","2026-10-14"),f("attend","出席人員（職稱即可）","text","園長、主任、各班教保服務人員共 12 位"),f("memo","會議筆記","area","運動會分工再確認，器材下週一前點清\n家長反應午餐太鹹→跟廚房溝通\n11月教學觀摩誰負責?還沒定\n消防演練改到11/6")],b:["gz"],docs:[
+ ["正式會議紀錄","園所內部","把會議筆記整理成正式會議紀錄：會議名稱、日期、出席人員、討論事項（每項寫出討論摘要、決議、負責人、期限）、臨時動議。筆記沒有寫到的內容一律寫「未記錄」或【待確認】，不可推測決議或負責人。"],
+ ["待辦追蹤表","園所內部","從會議筆記中整理出所有待辦事項，做成表格：事項｜負責人｜期限｜狀態。沒有負責人或期限的事項標示【待確認】，並列在表格最上方提醒我追蹤。"],
+ ["給全體同仁的會議摘要","同仁","寫一則 150 字以內的會議摘要，給沒有出席的同仁快速掌握重點。"]]},
+{id:"curriculum",m:["monthly"],t:"主題課程計畫",d:"主題網、週計畫與給家長的主題說明。",f:[f("theme","主題名稱","text","我們的社區"),f("cls","班級與年齡","text","中班（4–5 歲）"),f("weeks","進行週數","text","6 週"),f("interest","孩子的興趣與舊經驗","area","孩子常聊到家附近的市場、公園和便利商店")],ms:[11,13,49,21,31,35],b:["cg"],pt:["cg"],docs:[
+ ["主題網","老師自己","以主題為中心畫出主題網（用文字階層呈現）：3 到 4 個主要概念，每個概念下列出 3 個可能的活動，並標註每個活動主要對應的課綱領域。使用上方勾選的教學方法。"],
+ ["週計畫","老師自己","依主題網排出第一週的週計畫表格（星期｜團體活動｜學習區｜例行性活動｜對應課綱領域），活動以遊戲和操作為主，不安排寫字或算術練習。"],
+ ["給家長的主題說明信","家長","寫一封給家長的主題說明信：這個主題為什麼適合孩子、接下來幾週會做什麼、家長可以怎麼在生活中延續（例如帶孩子逛市場時可以聊什麼）。"]]},
+{id:"birthday",m:["monthly"],t:"慶生會",d:"每月慶生會的通知與活動。",f:[f("month","慶生月份","text","10 月"),f("date","日期","date","2026-10-30"),f("form","慶生方式","text","班級慶生、唱歌、孩子分享自己的成長")],ms:[37,41],b:["gz"],docs:[
+ ["慶生會通知","家長","寫一則慶生會通知，說明日期與方式；若園所不接受家長帶蛋糕或禮物，用溫和的語氣說明【請依園所規定確認】。"],
+ ["慶生活動流程","老師自己","設計一個 30 分鐘的慶生活動流程，使用上方勾選的教學方法，讓壽星分享成長，也讓其他孩子練習祝福與聆聽。"]]},
+{id:"health",m:["monthly"],t:"健康檢查與託藥",d:"身高體重、視力、口腔檢查通知，以及託藥單。",f:[f("item","檢查項目","text","身高體重測量、視力篩檢"),f("date","日期","date","2026-10-22"),f("who","對象","text","全園幼兒")],b:["zz","gz"],pt:["health","med"],docs:[
+ ["健康檢查通知","家長","寫一則健康檢查通知：項目、日期、目的、家長需配合事項，說明結果會如何告知家長。"],
+ ["託藥單（空白格式）","家長","設計一份空白的「幼兒託藥單」格式，欄位包含：幼兒班級與姓名、藥品來源（醫療機構名稱）、用藥日期、時間、劑量、用法、注意事項、家長簽名；以及園所執行紀錄欄（給藥時間、給藥人員簽名）。只設計格式，不填入資料。"],
+ ["給家長的託藥說明","家長","寫一段託藥說明，提醒家長需要協助的事項，例如藥品需附藥袋。"]]},
+{id:"injury",m:["anytime"],t:"孩子受傷告知",d:"最需要謹慎的溝通：客觀、即時、不推卸也不過度承諾。",f:[f("time","發生時間","text","今天上午 10:20"),f("place","發生地點","text","戶外遊戲場溜滑梯旁"),f("what","經過（客觀描述，不寫其他幼兒姓名）","area","孩子在奔跑時跌倒，右膝擦傷約 3 公分"),f("care","園所處理","area","立即清潔傷口、冰敷並貼上敷料；園護確認無其他不適"),f("follow","後續觀察","text","今天持續觀察，放學時當面說明")],b:["plan","xa","gz"],docs:[
+ ["電話告知講稿","家長","寫一段打電話告知家長的講稿：先說孩子目前的狀況讓家長安心，再客觀說明經過與處理，最後說明後續觀察與聯絡方式。語氣誠懇，不推卸責任，也不過度承諾。"],
+ ["書面說明（聯絡簿）","家長","寫一段聯絡簿的書面說明（150 字以內），內容與電話告知一致。"],
+ ["傷病處理紀錄","園所內部","整理成傷病處理紀錄格式：時間、地點、經過、處理方式、通知家長的時間與方式、後續追蹤。是否需要校安通報，標示【請依園所規定與《校園安全及災害事件通報作業要點》判斷】。"]]},
+{id:"closure",m:["anytime"],t:"停課通知",d:"傳染病或颱風等天災的停課與復課。",f:[f("reason","停課原因","text","班上有幼兒經醫師診斷為腸病毒"),f("range","停課範圍","text","小班一班"),f("period","停課期間","text","10 月 20 日至 10 月 26 日"),f("back","復課日","date","2026-10-27"),f("during","停課期間安排","area","教室全面消毒；提供在家親子活動建議")],ms:[31,39,47],b:["cdc","city"],docs:[
+ ["LINE 緊急通知","家長","寫一則 LINE 緊急通知（120 字以內）：停課原因（不透露是哪位幼兒）、停課範圍與期間、復課日、請家長留意的症狀。停課標準與天數一律依縣市與疾管署公告，不要自己補充規定。"],
+ ["紙本正式通知","家長","寫一份紙本正式停課通知，包含停課原因、期間、復課日、居家照護與觀察重點、就醫提醒、園所聯絡方式【待補】。"],
+ ["停課期間親子活動建議","家長","提供 5 個停課期間在家可以做的親子活動，使用上方勾選的教學方法，不需要特別購買材料。"]]},
+{id:"conflict",m:["anytime"],t:"同儕衝突的家長溝通",d:"兩邊家長都要溝通，且要保護雙方孩子的隱私。",f:[f("what","經過（客觀描述，以 A、B 代稱）","area","自由遊戲時 A 和 B 都想玩同一台積木車，B 推了 A，A 手臂有紅印"),f("care","園所處理","area","立即分開並安撫，確認 A 沒有受傷；引導兩人說出感受並討論輪流的方法"),f("follow","後續安排","text","明天在班上進行輪流與表達需求的課程")],ms:[65,45,63,66],b:["gz"],docs:[
+ ["給雙方家長的溝通講稿","家長","分別寫給 A 家長與 B 家長的溝通講稿：客觀說明經過、園所的處理、後續安排。不透露另一個孩子的姓名，不評斷孩子是「壞」或「打人的」，強調這是孩子學習社交的過程。"],
+ ["聯絡簿留言","家長","寫兩則聯絡簿留言（各 100 字以內），分別給雙方家長。"],
+ ["班級後續課程","幼兒","設計 2 個班級活動，幫助全班孩子學習表達需求與輪流，使用上方勾選的教學方法，不點名任何孩子。"]]},
+{id:"official",m:["anytime"],t:"公文讀懂與回覆",d:"把長篇公文變成待辦清單，再擬回覆。",f:[f("doc","公文內容（請先刪除個資）","area","請貼上公文全文"),f("our","本園的情況","area","例：本園預計 11 月 6 日辦理消防演練")],b:["city"],docs:[
+ ["公文重點摘要","老師自己","讀這份公文，整理成：①這份公文要我們做什麼（條列）；②截止日期；③需要準備的資料或表單；④負責單位或聯絡窗口。公文裡沒有寫的，標示【公文未載明】，不可推測。"],
+ ["回覆或填報草稿","園所內部","依公文要求與「本園的情況」，擬一份回覆或填報內容草稿。格式依公文要求；不確定的地方標示【待確認】。"]]},
+{id:"evaluation",m:["anytime"],t:"評鑑與訪視資料",d:"整理佐證資料與說明文字。",f:[f("items","評鑑項目或指標（請貼上當期內容）","area",""),f("have","目前已有的資料","area","課程計畫、教學觀察紀錄、親師溝通紀錄、會議紀錄")],b:["city","cg"],docs:[
+ ["佐證資料對照表","園所內部","依「評鑑項目或指標」與「目前已有的資料」，做一張對照表：指標｜可對應的資料｜還缺什麼。只能使用我貼上的指標內容，不可自行補充評鑑指標。"],
+ ["說明文字草稿","園所內部","為每一項指標寫一段 100 字左右的說明文字草稿，說明本園如何落實。具體做法若資料沒有提供，標示【待補：請填入實際做法】。"]]},
+{id:"handover",m:["anytime"],t:"新進同仁交接",d:"讓新同仁第一週就上手。",f:[f("role","職務","text","中班教保服務人員"),f("routine","每日工作","area","入園接待、帶班、聯絡簿、午睡照護、放學交接"),f("tool","常用系統與表單","text","聯絡簿、教學日誌、託藥單、傷病紀錄")],b:["plan","gz"],docs:[
+ ["工作交接清單","園所內部","整理一份工作交接清單：每日、每週、每月、每學期要做的事，以及常用表單放在哪裡【待補】。"],
+ ["新人第一週指南","新進同仁","寫一份新人第一週指南：每天的學習重點、可以請教誰（以職稱表示）、常見問題。語氣友善。"]]}
+];
+
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const WD="日一二三四五六";
+const fmtDate=v=>{if(!v)return"";const [y,m,d]=v.split("-").map(Number);const dt=new Date(y,m-1,d);return `${y} 年 ${m} 月 ${d} 日（星期${WD[dt.getDay()]}）`};
+const store={get(k){try{return JSON.parse(localStorage.getItem("kcal:"+k))}catch(e){return null}},set(k,v){try{localStorage.setItem("kcal:"+k,JSON.stringify(v))}catch(e){}}};
+const SEM1=[8,9,10,11,12,1],SEM2=[2,3,4,5,6,7];
+const HOTM=new Set(EVENTS.filter(e=>e.hot).flatMap(e=>e.m));
+const totalDocs=EVENTS.reduce((s,e)=>s+e.docs.length,0);
+$("#n-docs").textContent=totalDocs;
+$("#n-sub").textContent=`份文件提示詞・${EVENTS.length} 個事件`;
+const evBtn=(e)=>`<button type="button" class="ev${e.hot?" hot":""}" data-id="${e.id}"><span>${esc(e.t)}</span><small>${e.docs.length} 份</small></button>`;
+function monthCard(m){const evs=EVENTS.filter(e=>e.m.includes(m));return `<div class="mon${HOTM.has(m)?" hot":""}"><span class="mn">${m} 月</span><div class="evs">${evs.map(evBtn).join("")}</div></div>`}
+$("#sem1").innerHTML=SEM1.map(monthCard).join("");
+$("#sem2").innerHTML=SEM2.map(monthCard).join("");
+$("#row-monthly").innerHTML=EVENTS.filter(e=>e.m.includes("monthly")).map(evBtn).join("");
+$("#row-any").innerHTML=EVENTS.filter(e=>e.m.includes("anytime")).map(evBtn).join("");
+
+/* settings */
+const kName=$("#k-name"),kRule=$("#k-rule");
+const sv=store.get("settings");if(sv){kName.value=sv.name||"○○幼兒園";kRule.value=sv.rule||""}
+[kName,kRule].forEach(el=>el.addEventListener("input",()=>{store.set("settings",{name:kName.value,rule:kRule.value});refresh()}));
+
+/* search */
+$("#q").addEventListener("input",e=>{const q=e.target.value.trim();document.querySelectorAll(".ev").forEach(b=>{const ev=EVENTS.find(x=>x.id===b.dataset.id);const hit=!q||(ev.t+ev.d+ev.docs.map(d=>d[0]).join("")).includes(q);b.classList.toggle("dim",!hit)})});
+
+/* workspace */
+let cur=null,vals={},picked=new Set();
+const RULES=["只能使用【資料】中的內容；資料沒有寫到的部分，一律標示【待補】，不可自行編造人名、數字、獎品、費用或規定。","不可引用法規條號，也不可自行寫出法規內容。需要依規定的地方：若【園所或縣市規定】有提供，就照著寫；沒有的話，標示【請依園所或縣市規定確認】。【可參考的依據】中列出的內容可以引用。","日期一律寫成「11 月 21 日（星期六）」的格式。","使用台灣繁體中文與台灣幼兒園的慣用語。","不寫任何幼兒或家長的真實姓名與個人資料。","幼兒活動以遊戲、操作與生活經驗為主，不安排注音、寫字或算術練習。"];
+function buildPrompt(ev,doc){
+  let s="你是台灣幼兒園的資深教保服務人員，擅長撰寫園所行政文書，也熟悉教育部《幼兒園教保活動課程大綱》。\n\n請遵守以下規則：\n"+RULES.map((r,i)=>`${i+1}. ${r}`).join("\n");
+  const rule=kRule.value.trim();
+  if(rule)s+="\n\n【園所或縣市規定】（請優先依照）\n"+rule;
+  s+="\n\n【資料】\n園所："+(kName.value.trim()||"○○幼兒園");
+  ev.f.forEach(fd=>{let v=(vals[fd.k]||"").trim();const opt=fd.l.includes("選填")||fd.l.includes("時填");if(!v&&opt)return;
+    if(fd.t==="date")v=fmtDate(v);
+    s+=`\n${fd.l.replace(/（.*?）/g,"")}：`+(v?(v.includes("\n")?"\n"+v.split("\n").map(x=>"・"+x.replace(/^[・\-\s]+/,"")).join("\n"):v):"【待補】")});
+  const ms=[...picked].filter(id=>(ev.ms||[]).includes(id));
+  if(ms.length)s+="\n\n【教學方法】（設計幼兒活動時運用）\n"+ms.map(id=>`・${MTH[id][0]}：${MTH[id][1]}`).join("\n");
+  const bs=(ev.b||[]).map(k=>BASIS[k].n);const pts=(ev.pt||[]).map(k=>POINTS[k]);
+  if(bs.length||pts.length)s+="\n\n【可參考的依據】\n"+bs.map(x=>"・"+x).join("\n")+(pts.length?"\n"+pts.map(x=>"・"+x).join("\n"):"");
+  s+="\n\n【任務】\n"+doc[2];
+  return s;
+}
+function renderWork(){
+  const ev=cur;if(!ev)return;
+  const months=ev.m.map(x=>x==="monthly"?"每個月":x==="anytime"?"隨時":x+" 月").join("、");
+  const fieldsHTML=ev.f.map(fd=>{const id="f-"+fd.k;const val=esc(vals[fd.k]||"");const ph=fd.ex?("例："+fd.ex.split("\n")[0]):"";
+    if(fd.t==="area")return `<label class="fl wide" for="${id}">${esc(fd.l)}<textarea id="${id}" data-k="${fd.k}" placeholder="${esc(ph)}">${val}</textarea></label>`;
+    if(fd.t==="date")return `<label class="fl" for="${id}">${esc(fd.l)}<input type="date" id="${id}" data-k="${fd.k}" value="${val}"><span class="hint" data-wd="${fd.k}">${vals[fd.k]?fmtDate(vals[fd.k]):""}</span></label>`;
+    return `<label class="fl" for="${id}">${esc(fd.l)}<input type="text" id="${id}" data-k="${fd.k}" value="${val}" placeholder="${esc(ph)}"></label>`}).join("");
+  const msHTML=(ev.ms||[]).length?`<div class="step"><div class="sh"><i>2</i>勾選想用的教學方法（選填）</div><div class="chips" id="ms">${ev.ms.map(id=>`<button type="button" class="chip" data-id="${id}" aria-pressed="${picked.has(id)}" title="${esc(MTH[id][1])}">${esc(MTH[id][0])}</button>`).join("")}</div><span class="hint">勾選的教學方法會寫進「幼兒課程活動」類的提示詞。</span></div>`:"";
+  const bHTML=(ev.b||[]).length?`<div class="basis"><b>提示詞會參考的依據</b>${ev.b.map(k=>BASIS[k].u?`<span>・<a href="${BASIS[k].u}" target="_blank" rel="noopener">${esc(BASIS[k].n)}</a></span>`:`<span>・${esc(BASIS[k].n)}</span>`).join("")}${(ev.pt||[]).map(k=>`<span class="pt">・${esc(POINTS[k])}</span>`).join("")}</div>`:"";
+  const n=(ev.ms||[]).length?3:2;
+  const docsHTML=ev.docs.map((d,i)=>`<article class="doc"><span class="aud">給${esc(d[1])}</span><h4>${esc(d[0])}</h4><p class="task">${esc(d[2].length>80?d[2].slice(0,78)+"⋯":d[2])}</p><div class="btnrow"><button type="button" class="btn or cp" data-i="${i}">複製提示詞</button></div><span class="status" data-st="${i}"></span><details><summary>預覽完整提示詞</summary><pre data-pv="${i}"></pre></details></article>`).join("");
+  $("#work").innerHTML=`<div class="ws"><div class="ws-h"><h2>${esc(ev.t)}</h2><span class="when">${months}・${ev.docs.length} 份文件</span><p class="d">${esc(ev.d)}</p><button type="button" class="back" id="back">回到行事曆</button></div>
+  <div class="step"><div class="sh"><i>1</i>填寫活動資料卡</div><div class="btnrow"><button type="button" class="btn ghost" id="ex">填入範例</button><button type="button" class="btn ghost" id="clr">清除</button></div><div class="fields">${fieldsHTML}</div><span class="hint">沒填的欄位，提示詞會寫成【待補】，AI 不會自己編。</span></div>
+  ${msHTML}${bHTML}
+  <div class="step"><div class="sh"><i>${n}</i>複製文件提示詞</div><p class="go">複製後貼到 <a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT</a>、<a href="https://gemini.google.com/app" target="_blank" rel="noopener">Gemini</a> 或 <a href="https://claude.ai/new" target="_blank" rel="noopener">Claude</a>。同一個事件的文件，可以在同一個對話裡接著貼。</p><div class="docs">${docsHTML}</div></div></div>`;
+  refresh();
+}
+function refresh(){if(!cur)return;document.querySelectorAll("[data-pv]").forEach(pre=>{pre.textContent=buildPrompt(cur,cur.docs[+pre.dataset.pv])})}
+function openEv(id,scroll){
+  const ev=EVENTS.find(e=>e.id===id);if(!ev)return;cur=ev;
+  vals=store.get("ev:"+id)||{};picked=new Set(store.get("ms:"+id)||[]);
+  document.querySelectorAll(".ev").forEach(b=>b.setAttribute("aria-current",b.dataset.id===id));
+  renderWork();
+  try{history.replaceState(null,"","#"+id)}catch(e){}
+  if(scroll)$("#work").scrollIntoView({behavior:"smooth",block:"start"});
+}
+document.addEventListener("click",e=>{const b=e.target.closest(".ev");if(b)openEv(b.dataset.id,true)});
+$("#work").addEventListener("input",e=>{const k=e.target.dataset.k;if(!k)return;vals[k]=e.target.value;store.set("ev:"+cur.id,vals);
+  const wd=document.querySelector(`[data-wd="${k}"]`);if(wd)wd.textContent=fmtDate(e.target.value);refresh()});
+$("#work").addEventListener("click",async e=>{
+  const t=e.target;
+  if(t.id==="back"){document.querySelector(".months").scrollIntoView({behavior:"smooth"});return}
+  if(t.id==="ex"){cur.f.forEach(fd=>{if(fd.ex)vals[fd.k]=fd.ex});store.set("ev:"+cur.id,vals);renderWork();return}
+  if(t.id==="clr"){vals={};store.set("ev:"+cur.id,vals);renderWork();return}
+  if(t.classList.contains("chip")){const id=+t.dataset.id;picked.has(id)?picked.delete(id):picked.add(id);t.setAttribute("aria-pressed",picked.has(id));store.set("ms:"+cur.id,[...picked]);refresh();return}
+  if(t.classList.contains("cp")){const i=+t.dataset.i;const p=buildPrompt(cur,cur.docs[i]);const st=document.querySelector(`[data-st="${i}"]`);
+    try{await navigator.clipboard.writeText(p);st.textContent="已複製，貼到 AI 就能使用。";setTimeout(()=>st.textContent="",2500)}
+    catch(err){const d=t.closest(".doc").querySelector("details");d.open=true;const pre=d.querySelector("pre");const r=document.createRange();r.selectNodeContents(pre);const s=getSelection();s.removeAllRanges();s.addRange(r);st.textContent="無法自動複製，已選取提示詞，請按 Ctrl+C（Mac 為 ⌘+C）。"}}
+});
+const h=(location.hash||"").slice(1);if(h&&EVENTS.find(e=>e.id===h))openEv(h,false);
+})();
+</script>
+</body>
+</html>
